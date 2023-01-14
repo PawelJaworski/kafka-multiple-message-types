@@ -14,8 +14,13 @@ class KafkaMessageFilteredReceiverListener {
     CountDownLatch documentCountDown = new CountDownLatch(1);
 
     @KafkaHandler
-    public void listen(ShipmentDocument document, @Header("__TypeId__") String type) {
-        System.out.println("[Filtered] Type: " + type );
+    public void listen(ShipmentDocument document, @Header(name = "receiver", required = false) String receiver) {
+        System.out.println("Receiver: " + receiver);
         documentCountDown.countDown();
+    }
+
+    @KafkaHandler(isDefault = true)
+    public void listenOther(Object event) {
+        System.out.println("Ignoring: " + event);
     }
 }

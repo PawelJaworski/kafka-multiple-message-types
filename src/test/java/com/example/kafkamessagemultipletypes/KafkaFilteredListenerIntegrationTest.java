@@ -71,4 +71,19 @@ class KafkaFilteredListenerIntegrationTest {
                 .await(5, TimeUnit.SECONDS);
         Assertions.assertFalse(isMessageConsumed);
     }
+
+    @Test
+    void shouldConsumeShipmentDocumentWithoutReceiverHeader() throws InterruptedException, ExecutionException {
+        //when
+        var document = new ShipmentDocument("BIA-WAW", "Bialystok", "Warszawa");
+
+        ProducerRecord<String, Object> producerRecord = new ProducerRecord<>(Config.TOPIC_NAME, document.id(),
+                document);
+
+        kafkaTemplate.send(producerRecord).get();
+        //then
+        var isMessageConsumed = kafkaMessageFilteredListener.documentCountDown
+                .await(5, TimeUnit.SECONDS);
+        Assertions.assertTrue(isMessageConsumed);
+    }
 }
