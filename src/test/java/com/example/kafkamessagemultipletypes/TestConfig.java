@@ -12,7 +12,9 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 import java.util.HashMap;
 import java.util.Map;
 
-public class KafkaTemplateTestConfig {
+class TestConfig {
+    static final long CONSUMER_TIMEOUT_IN_SEC = 10;
+
     @Value("${kafka.bootstrap-servers}")
     private String bootstrapServers;
 

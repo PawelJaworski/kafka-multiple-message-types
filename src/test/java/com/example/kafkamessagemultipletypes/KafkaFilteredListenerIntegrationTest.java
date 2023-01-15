@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import static com.example.kafkamessagemultipletypes.Config.RECEIVER_HEADER;
 
 @SpringBootTest
-@Import({KafkaTemplateTestConfig.class})
+@Import({TestConfig.class})
 @EmbeddedKafka(partitions = 1, brokerProperties = { "listeners=PLAINTEXT://localhost:9092", "port=9092" })
 class KafkaFilteredListenerIntegrationTest {
     @Autowired
@@ -50,7 +50,7 @@ class KafkaFilteredListenerIntegrationTest {
         kafkaTemplate.send(producerRecord).get();
         //then
         var isMessageConsumed = kafkaMessageFilteredListener.documentCountDown
-                .await(5, TimeUnit.SECONDS);
+                .await(TestConfig.CONSUMER_TIMEOUT_IN_SEC, TimeUnit.SECONDS);
         Assertions.assertTrue(isMessageConsumed);
     }
 
@@ -68,7 +68,7 @@ class KafkaFilteredListenerIntegrationTest {
         kafkaTemplate.send(producerRecord).get();
         //then
         var isMessageConsumed = kafkaMessageFilteredListener.documentCountDown
-                .await(5, TimeUnit.SECONDS);
+                .await(TestConfig.CONSUMER_TIMEOUT_IN_SEC, TimeUnit.SECONDS);
         Assertions.assertFalse(isMessageConsumed);
     }
 
@@ -83,7 +83,7 @@ class KafkaFilteredListenerIntegrationTest {
         kafkaTemplate.send(producerRecord).get();
         //then
         var isMessageConsumed = kafkaMessageFilteredListener.documentCountDown
-                .await(5, TimeUnit.SECONDS);
+                .await(TestConfig.CONSUMER_TIMEOUT_IN_SEC, TimeUnit.SECONDS);
         Assertions.assertTrue(isMessageConsumed);
     }
 }

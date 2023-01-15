@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 @SpringBootTest
-@Import({KafkaTemplateTestConfig.class})
+@Import({TestConfig.class})
 @EmbeddedKafka(partitions = 1, brokerProperties = { "listeners=PLAINTEXT://localhost:9092", "port=9092" })
 class KafkaDefaultListenerIntegrationTest {
     @Autowired
@@ -42,7 +42,7 @@ class KafkaDefaultListenerIntegrationTest {
         kafkaTemplate.send(producerRecord).get();
         //then
         var isMessageConsumed = kafkaMessageDefaultListener.documentCountDown
-                .await(5, TimeUnit.SECONDS);
+                .await(TestConfig.CONSUMER_TIMEOUT_IN_SEC, TimeUnit.SECONDS);
         Assertions.assertTrue(isMessageConsumed);
     }
 
@@ -54,7 +54,7 @@ class KafkaDefaultListenerIntegrationTest {
         kafkaTemplate.send(Config.TOPIC_NAME, event.id(), event);
         //then
         var isMessageConsumed = kafkaMessageDefaultListener.shipmentLeftCountDown
-                .await(5, TimeUnit.SECONDS);
+                .await(TestConfig.CONSUMER_TIMEOUT_IN_SEC, TimeUnit.SECONDS);
         Assertions.assertTrue(isMessageConsumed);
     }
 }
