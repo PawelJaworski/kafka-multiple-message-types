@@ -30,7 +30,9 @@ class Config {
 
         ConcurrentKafkaListenerContainerFactory<String, Object> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerDefaultFactory());
+        factory.setConsumerFactory(new ConsumerFactoryBuilder()
+                .groupId("all-events")
+                .build());
         return factory;
     }
 
@@ -38,7 +40,9 @@ class Config {
     public ConcurrentKafkaListenerContainerFactory<String, Object> withFilterFactory() {
         ConcurrentKafkaListenerContainerFactory<String, Object> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerWithFilterFactory());
+        factory.setConsumerFactory(new ConsumerFactoryBuilder()
+                .groupId("filtered-receiver")
+                .build());
         factory.setRecordFilterStrategy(it ->
                 Optional.ofNullable(it.headers().lastHeader(RECEIVER_HEADER))
                     .map(Header::value)
@@ -48,25 +52,26 @@ class Config {
         return factory;
     }
 
-    private ConsumerFactory<String, Object> consumerDefaultFactory() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "shipmentListener");
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, TRUSTED_PACKAGES);
-        props.put(JsonDeserializer.REMOVE_TYPE_INFO_HEADERS, false);
-        return new DefaultKafkaConsumerFactory<>(props);
-    }
+    private class ConsumerFactoryBuilder {
+        final Map<String, Object> props;
 
-    private ConsumerFactory<String, Object> consumerWithFilterFactory() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "filtered-events");
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, TRUSTED_PACKAGES);
-        props.put(JsonDeserializer.REMOVE_TYPE_INFO_HEADERS, false);
-        return new DefaultKafkaConsumerFactory<>(props);
+        private ConsumerFactoryBuilder() {
+            props = new HashMap<>();
+            props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+            props.put(ConsumerConfig.GROUP_ID_CONFIG, "shipment-group-id");
+            props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+            props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+            props.put(JsonDeserializer.TRUSTED_PACKAGES, TRUSTED_PACKAGES);
+            props.put(JsonDeserializer.REMOVE_TYPE_INFO_HEADERS, false);
+        }
+
+        ConsumerFactoryBuilder groupId(String groupId) {
+            props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+            return this;
+        }
+
+        ConsumerFactory<String, Object> build() {
+            return new DefaultKafkaConsumerFactory<>(Map.copyOf(props));
+        }
     }
 }
