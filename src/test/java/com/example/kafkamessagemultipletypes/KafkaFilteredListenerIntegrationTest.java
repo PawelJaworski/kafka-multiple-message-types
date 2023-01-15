@@ -1,6 +1,7 @@
 package com.example.kafkamessagemultipletypes;
 
 import com.example.kafkamessagemultipletypes.message.ShipmentDocument;
+import com.example.kafkamessagemultipletypes.message.ShipmentDocumentTestData;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,9 +38,9 @@ class KafkaFilteredListenerIntegrationTest {
     }
 
     @Test
-    void shouldConsumeShipmentDocumentWithReceiverHeader() throws InterruptedException, ExecutionException {
+    void shouldConsumeShipmentDocumentWithReceiverHeader() throws InterruptedException {
         //when
-        var document = new ShipmentDocument("BIA-WAW", "Bialystok", "Warszawa");
+        var document = ShipmentDocumentTestData.fromBiaToWaw();
 
         ProducerRecord<String, Object> producerRecord = new ProducerRecord<>(Config.TOPIC_NAME, document.id(),
                 document);
@@ -47,7 +48,7 @@ class KafkaFilteredListenerIntegrationTest {
                 .headers()
                 .add(RECEIVER_HEADER, "receiver-service".getBytes());
 
-        kafkaTemplate.send(producerRecord).get();
+        kafkaTemplate.send(producerRecord);
         //then
         var isMessageConsumed = kafkaMessageFilteredListener.documentCountDown
                 .await(TestConfig.CONSUMER_TIMEOUT_IN_SEC, TimeUnit.SECONDS);
@@ -55,9 +56,9 @@ class KafkaFilteredListenerIntegrationTest {
     }
 
     @Test
-    void shouldIgnoreShipmentDocumentWithOtherReceiverHeader() throws InterruptedException, ExecutionException {
+    void shouldIgnoreShipmentDocumentWithOtherReceiverHeader() throws InterruptedException {
         //when
-        var document = new ShipmentDocument("BIA-WAW", "Bialystok", "Warszawa");
+        var document = ShipmentDocumentTestData.fromBiaToWaw();
 
         ProducerRecord<String, Object> producerRecord = new ProducerRecord<>(Config.TOPIC_NAME, document.id(),
                 document);
@@ -65,7 +66,7 @@ class KafkaFilteredListenerIntegrationTest {
                 .headers()
                 .add(RECEIVER_HEADER, "other-receiver-service".getBytes());
 
-        kafkaTemplate.send(producerRecord).get();
+        kafkaTemplate.send(producerRecord);
         //then
         var isMessageConsumed = kafkaMessageFilteredListener.documentCountDown
                 .await(TestConfig.CONSUMER_TIMEOUT_IN_SEC, TimeUnit.SECONDS);
@@ -73,14 +74,10 @@ class KafkaFilteredListenerIntegrationTest {
     }
 
     @Test
-    void shouldConsumeShipmentDocumentWithoutReceiverHeader() throws InterruptedException, ExecutionException {
+    void shouldConsumeShipmentDocumentWithoutReceiverHeader() throws InterruptedException {
         //when
-        var document = new ShipmentDocument("BIA-WAW", "Bialystok", "Warszawa");
-
-        ProducerRecord<String, Object> producerRecord = new ProducerRecord<>(Config.TOPIC_NAME, document.id(),
-                document);
-
-        kafkaTemplate.send(producerRecord).get();
+        var document = ShipmentDocumentTestData.fromBiaToWaw();
+        kafkaTemplate.send(Config.TOPIC_NAME, document.id(), document);
         //then
         var isMessageConsumed = kafkaMessageFilteredListener.documentCountDown
                 .await(TestConfig.CONSUMER_TIMEOUT_IN_SEC, TimeUnit.SECONDS);

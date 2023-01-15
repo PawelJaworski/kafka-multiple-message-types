@@ -1,8 +1,7 @@
 package com.example.kafkamessagemultipletypes;
 
-import com.example.kafkamessagemultipletypes.message.ShipmentDocument;
-import com.example.kafkamessagemultipletypes.message.ShipmentLeftEvent;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import com.example.kafkamessagemultipletypes.message.ShipmentDocumentTestData;
+import com.example.kafkamessagemultipletypes.message.ShipmentLeftTestData;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +11,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 @SpringBootTest
@@ -29,17 +27,10 @@ class KafkaDefaultListenerIntegrationTest {
     String bootstrapServers;
 
     @Test
-    void shouldConsumeShipmentDocument() throws InterruptedException, ExecutionException {
+    void shouldConsumeShipmentDocument() throws InterruptedException {
         //when
-        var document = new ShipmentDocument("BIA-WAW", "Bialystok", "Warszawa");
-
-        ProducerRecord<String, Object> producerRecord = new ProducerRecord<>(Config.TOPIC_NAME, document.id(),
-                document);
-        producerRecord
-                .headers()
-                .add("version", "shipment-document.v1".getBytes());
-
-        kafkaTemplate.send(producerRecord).get();
+        var document = ShipmentDocumentTestData.fromBiaToWaw();
+        kafkaTemplate.send(Config.TOPIC_NAME, document.id(), document);
         //then
         var isMessageConsumed = kafkaMessageDefaultListener.documentCountDown
                 .await(TestConfig.CONSUMER_TIMEOUT_IN_SEC, TimeUnit.SECONDS);
@@ -47,9 +38,9 @@ class KafkaDefaultListenerIntegrationTest {
     }
 
     @Test
-    void shouldConsumeShipmentLeftEvent() throws InterruptedException, ExecutionException {
+    void shouldConsumeShipmentLeftEvent() throws InterruptedException {
         //when
-        var event = new ShipmentLeftEvent("BIA-WAW");
+        var event = ShipmentLeftTestData.fromBiaToWawLeft();
 
         kafkaTemplate.send(Config.TOPIC_NAME, event.id(), event);
         //then
